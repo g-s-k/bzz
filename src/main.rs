@@ -1,4 +1,11 @@
+use std::collections::HashSet;
+use std::fmt::Display;
 use std::io::{self, stdin, stdout, Write};
+
+use rand::{
+    seq::{IteratorRandom, SliceRandom},
+    thread_rng, Rng,
+};
 use termion::{
     clear, color,
     cursor::{self, Goto},
@@ -14,9 +21,15 @@ const START_Y: u16 = 2;
 const HALF_X: u16 = 4;
 const HALF_Y: u16 = 4;
 
+const VOWELS: &[char] = &['A', 'E', 'I', 'O', 'U', 'Y'];
+const CONSONANTS: &[char] = &[
+    'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X',
+    'Z',
+];
+
 type Result = io::Result<()>;
 
-fn draw_hex(screen: &mut impl Write, x_min: u16, y_min: u16, letter: &str) -> Result {
+fn draw_hex<T: Display>(screen: &mut impl Write, x_min: u16, y_min: u16, letter: T) -> Result {
     write!(
         screen,
         "{l0}{s0}{l1}{s2}       {s1}{l2}{s2}         {s1}{l3}{s2}           \
@@ -56,7 +69,7 @@ fn draw_middle_hex(screen: &mut impl Write, letter: char) -> Result {
     Ok(())
 }
 
-fn draw_board(screen: &mut impl Write) -> Result {
+fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
     // clear everything
     write!(
         screen,
@@ -66,25 +79,72 @@ fn draw_board(screen: &mut impl Write) -> Result {
         hide = cursor::Hide
     )?;
     // draw some hexagons
-    draw_hex(screen, START_X, START_Y + HALF_Y, "A")?;
-    draw_hex(screen, START_X + 3 * HALF_X, START_Y, "B")?;
-    draw_hex(screen, START_X + 6 * HALF_X, START_Y + HALF_Y, "C")?;
-    draw_hex(screen, START_X, START_Y + 3 * HALF_Y, "D")?;
-    draw_hex(screen, START_X + 3 * HALF_X, START_Y + 4 * HALF_Y, "E")?;
-    draw_hex(screen, START_X + 6 * HALF_X, START_Y + 3 * HALF_Y, "F")?;
+    draw_hex(screen, START_X, START_Y + HALF_Y, game.letters[1])?;
+    draw_hex(screen, START_X + 3 * HALF_X, START_Y, game.letters[2])?;
+    draw_hex(
+        screen,
+        START_X + 6 * HALF_X,
+        START_Y + HALF_Y,
+        game.letters[3],
+    )?;
+    draw_hex(screen, START_X, START_Y + 3 * HALF_Y, game.letters[4])?;
+    draw_hex(
+        screen,
+        START_X + 3 * HALF_X,
+        START_Y + 4 * HALF_Y,
+        game.letters[5],
+    )?;
+    draw_hex(
+        screen,
+        START_X + 6 * HALF_X,
+        START_Y + 3 * HALF_Y,
+        game.letters[6],
+    )?;
 
     // draw center one
-    draw_middle_hex(screen, 'G')?;
+    draw_middle_hex(screen, game.letters[0])?;
 
     Ok(())
 }
 
+fn pick_letters() -> [char; 7] {
+    let mut rng = thread_rng();
+
+    let num_vowels = rng.gen_range(1, 3);
+
+    let vowels = VOWELS.choose_multiple(&mut rng, num_vowels);
+    let consonants = CONSONANTS.choose_multiple(&mut rng, 7 - num_vowels);
+
+    let mut out = ['\0'; 7];
+    vowels
+        .into_iter()
+        .chain(consonants.into_iter())
+        .cloned()
+        .choose_multiple_fill(&mut rng, &mut out[..]);
+    out
+}
+
+struct Game {
+    letters: [char; 7],
+    words: HashSet<String>,
+}
+
+impl Game {
+    fn new() -> Self {
+        Self {
+            letters: pick_letters(),
+            words: HashSet::new(),
+        }
+    }
+}
+
 fn main() -> Result {
+    let game = Game::new();
     let stdin = stdin();
     let mut screen = AlternateScreen::from(stdout()).into_raw_mode()?;
     screen.flush()?;
 
-    draw_board(&mut screen)?;
+    draw_board(&mut screen, &game)?;
     screen.flush()?;
 
     for c in stdin.keys() {
@@ -93,6 +153,9 @@ fn main() -> Result {
             _ => continue,
         }
     }
+
+    write!(screen, "{}", cursor::Show)?;
+    screen.flush()?;
 
     Ok(())
 }
