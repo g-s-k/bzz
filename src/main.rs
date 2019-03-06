@@ -1,6 +1,7 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::fmt::Display;
 use std::io::{self, stdin, stdout, Write};
+use std::mem::replace;
 
 use rand::{
     seq::{IteratorRandom, SliceRandom},
@@ -16,10 +17,11 @@ use termion::{
     style,
 };
 
-const START_X: u16 = 4;
+const START_X: u16 = 2;
 const START_Y: u16 = 2;
 const HALF_X: u16 = 4;
 const HALF_Y: u16 = 4;
+const LIST_START_X: u16 = 45;
 
 const VOWELS: &[char] = &['A', 'E', 'I', 'O', 'U', 'Y'];
 const CONSONANTS: &[char] = &[
@@ -104,6 +106,19 @@ fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
     // draw center one
     draw_middle_hex(screen, game.letters[0])?;
 
+    // draw input box
+    write!(screen, "{}{}{:20}{}", Goto(START_X, 40), color::Bg(color::LightBlack), game.input, style::Reset)?;
+
+    // write the words out
+    for (idx, word) in game.words.iter().enumerate() {
+        write!(
+            screen,
+            "{}{}",
+            Goto(LIST_START_X, START_Y + idx as u16),
+            word
+        )?;
+    }
+
     Ok(())
 }
 
@@ -120,26 +135,29 @@ fn pick_letters() -> [char; 7] {
         .into_iter()
         .chain(consonants.into_iter())
         .cloned()
+        // randomizes the order
         .choose_multiple_fill(&mut rng, &mut out[..]);
     out
 }
 
 struct Game {
+    input: String,
     letters: [char; 7],
-    words: HashSet<String>,
+    words: BTreeSet<String>,
 }
 
 impl Game {
     fn new() -> Self {
         Self {
+            input: String::new(),
             letters: pick_letters(),
-            words: HashSet::new(),
+            words: BTreeSet::new(),
         }
     }
 }
 
 fn main() -> Result {
-    let game = Game::new();
+    let mut game = Game::new();
     let stdin = stdin();
     let mut screen = AlternateScreen::from(stdout()).into_raw_mode()?;
     screen.flush()?;
@@ -149,9 +167,25 @@ fn main() -> Result {
 
     for c in stdin.keys() {
         match c? {
+            // exit
             Key::Esc => break,
+
+            // input
+            Key::Backspace => {
+                game.input.pop();
+            }
+            Key::Char('\n') => {
+                game.words.insert(replace(&mut game.input, String::new()));
+            }
+            Key::Char(' ') => game.input.clear(),
+            Key::Char(c) if c.is_alphanumeric() => game.input.push(c),
+
+            // noise
             _ => continue,
         }
+
+        draw_board(&mut screen, &game)?;
+        screen.flush()?;
     }
 
     write!(screen, "{}", cursor::Show)?;
