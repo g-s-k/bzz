@@ -1,15 +1,11 @@
+#![warn(clippy::pedantic)]
+
 use std::collections::BTreeSet;
 use std::fs::File;
 use std::io::{self, stdin, stdout, BufRead, BufReader, Write};
 use std::thread;
 
-use termion::{
-    cursor,
-    event::Key,
-    input::TermRead,
-    raw::IntoRawMode,
-    screen::AlternateScreen,
-};
+use termion::{cursor, event::Key, input::TermRead, raw::IntoRawMode, screen::AlternateScreen};
 
 mod error;
 mod model;

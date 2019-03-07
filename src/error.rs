@@ -4,7 +4,7 @@ use std::io;
 #[derive(Debug)]
 pub enum Error {
     IO(io::Error),
-    Thread(Box<Any + Send>)
+    Thread(Box<Any + Send>),
 }
 
 impl From<io::Error> for Error {

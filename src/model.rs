@@ -22,10 +22,9 @@ fn pick_letters() -> [char; 7] {
 
     let mut out = ['\0'; 7];
     vowels
-        .into_iter()
-        .chain(consonants.into_iter())
+        .chain(consonants)
         .cloned()
-    // randomizes the order
+        // randomizes the order
         .choose_multiple_fill(&mut rng, &mut out[..]);
     out
 }

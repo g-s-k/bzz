@@ -34,10 +34,10 @@ fn draw_hex<T: Display>(screen: &mut impl Write, x_min: u16, y_min: u16, letter:
         sp3 = "   ",
         sp5 = "     ",
         // lines
-        l0 = Goto(x_min + 3, y_min + 0),
+        l0 = Goto(x_min + 3, y_min),
         l1 = Goto(x_min + 2, y_min + 1),
         l2 = Goto(x_min + 1, y_min + 2),
-        l3 = Goto(x_min + 0, y_min + 3),
+        l3 = Goto(x_min, y_min + 3),
         l4 = Goto(x_min + 1, y_min + 4),
         l5 = Goto(x_min + 2, y_min + 5),
         l6 = Goto(x_min + 3, y_min + 6),
@@ -132,6 +132,7 @@ pub fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
 
     // write the words out
     for (idx, word) in game.words.iter().enumerate() {
+        #[allow(clippy::cast_possible_truncation)]
         write!(screen, "{}{}", Goto(LIST_START_X, 2 + idx as u16), word)?;
     }
 
