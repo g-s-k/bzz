@@ -21,7 +21,7 @@ const TERM_HEIGHT: u16 = 24;
 const TERM_WIDTH: u16 = 80;
 
 const START_X: u16 = 2;
-const START_Y: u16 = 2;
+const START_Y: u16 = 1;
 const HALF_X: u16 = 4;
 const HALF_Y: u16 = 3;
 const LIST_START_X: u16 = 45;
@@ -71,6 +71,15 @@ fn draw_middle_hex(screen: &mut impl Write, letter: char) -> Result {
     )?;
     write!(screen, "{}", reset)?;
     Ok(())
+}
+
+fn draw_score(screen: &mut impl Write, score: usize) -> Result {
+    write!(
+        screen,
+        "{goto}Score: {score:0>3}",
+        goto = Goto(34, TERM_HEIGHT),
+        score = score
+    )
 }
 
 fn draw_err(screen: &mut impl Write, game: &Game) -> Result {
@@ -132,7 +141,7 @@ fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
         color::Bg(color::LightBlack),
         game.input,
         style::Reset,
-        width = 35
+        width = 31
     )?;
 
     // write the words out
@@ -140,11 +149,12 @@ fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
         write!(
             screen,
             "{}{}",
-            Goto(LIST_START_X, START_Y + idx as u16),
+            Goto(LIST_START_X, 2 + idx as u16),
             word
         )?;
     }
 
+    draw_score(screen, game.score)?;
     draw_err(screen, game)?;
 
     Ok(())
@@ -172,6 +182,7 @@ struct Game {
     input: String,
     letters: [char; 7],
     words: BTreeSet<String>,
+    score: usize,
     error: Option<String>,
 }
 
@@ -181,6 +192,7 @@ impl Game {
             input: String::new(),
             letters: pick_letters(),
             words: BTreeSet::new(),
+            score: 0,
             error: None,
         }
     }
@@ -200,7 +212,11 @@ impl Game {
             self.error = Some(err);
             self.input.clear();
         } else {
-            self.words.insert(replace(&mut self.input, String::new()));
+            if self.words.insert(replace(&mut self.input, String::new())) {
+                self.score += 1;
+            } else {
+                self.error = Some("You already found that word!".into());
+            }
         }
     }
 }
