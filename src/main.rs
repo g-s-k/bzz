@@ -58,7 +58,7 @@ fn main() -> Result<(), Error> {
     view::draw_board(&mut screen, &game)?;
     screen.flush()?;
 
-    game.dict = j_handle.join()??;
+    game.set_dict(j_handle.join()??);
 
     for c in stdin.keys() {
         // clear previous error

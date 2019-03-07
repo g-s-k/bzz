@@ -135,7 +135,7 @@ pub fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
         write!(screen, "{}{}", Goto(LIST_START_X, 2 + idx as u16), word)?;
     }
 
-    draw_score(screen, game.score)?;
+    draw_score(screen, game.score())?;
     draw_err(screen, game)?;
 
     Ok(())

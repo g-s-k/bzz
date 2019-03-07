@@ -34,8 +34,8 @@ pub struct Game {
     pub input: String,
     pub letters: [char; 7],
     pub words: BTreeSet<String>,
-    pub dict: BTreeSet<String>,
-    pub score: usize,
+    dict: BTreeSet<String>,
+    score: usize,
     pub error: Option<String>,
 }
 
@@ -56,6 +56,14 @@ impl Game {
         self.letters = pick_letters();
         self.words.clear();
         self.score = 0;
+    }
+
+    pub fn set_dict(&mut self, dict: BTreeSet<String>) {
+        self.dict = dict;
+    }
+
+    pub fn score(&self) -> usize {
+        self.score
     }
 
     fn check(&self) -> Option<String> {
@@ -88,7 +96,7 @@ impl Game {
         None
     }
 
-    fn score(&self) -> usize {
+    fn eval_score(&self) -> usize {
         if self.letters.iter().all(|&c| self.input.contains(c)) {
             3
         } else {
@@ -101,7 +109,7 @@ impl Game {
             self.error = Some(err);
             self.input.clear();
         } else {
-            let score = self.score();
+            let score = self.eval_score();
             if self.words.insert(replace(&mut self.input, String::new())) {
                 self.score += score;
             } else {
