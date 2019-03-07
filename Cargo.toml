@@ -2,10 +2,11 @@
 name = "bzz"
 description = "a spelling bee game"
 license = "MIT"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["George Kaplan <george@georgekaplan.xyz>"]
 edition = "2018"
 repository = "https://github.com/g-s-k/bzz"
+readme = "./README.md"
 
 [dependencies]
 termion = "1"
