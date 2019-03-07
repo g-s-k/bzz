@@ -1,5 +1,7 @@
 [package]
 name = "bzz"
+description = "a spelling bee game"
+license = "MIT"
 version = "0.0.1"
 authors = ["George Kaplan <george@georgekaplan.xyz>"]
 edition = "2018"
