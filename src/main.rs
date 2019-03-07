@@ -160,6 +160,18 @@ impl Game {
             words: BTreeSet::new(),
         }
     }
+
+    fn check(&self) -> bool {
+        self.input.chars().all(|c| self.letters.contains(&c))
+    }
+
+    fn submit(&mut self) {
+        if self.check() {
+            self.words.insert(replace(&mut self.input, String::new()));
+        } else {
+            self.input.clear();
+        }
+    }
 }
 
 fn main() -> Result {
@@ -180,11 +192,9 @@ fn main() -> Result {
             Key::Backspace => {
                 game.input.pop();
             }
-            Key::Char('\n') => {
-                game.words.insert(replace(&mut game.input, String::new()));
-            }
+            Key::Char('\n') => game.submit(),
             Key::Char(' ') => game.input.clear(),
-            Key::Char(c) if c.is_alphanumeric() => game.input.push(c),
+            Key::Char(c) if c.is_alphanumeric() => game.input.push(c.to_ascii_uppercase()),
 
             // noise
             _ => continue,
