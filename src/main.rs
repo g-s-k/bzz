@@ -19,6 +19,7 @@ use model::Game;
 
 const DICT_PATH: &str = "/usr/share/dict/words";
 
+#[derive(Debug)]
 enum Error {
     IO(io::Error),
     Thread(Box<Any + Send>)
