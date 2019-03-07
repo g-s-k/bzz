@@ -62,9 +62,13 @@ fn draw_middle_hex(screen: &mut impl Write, letter: char) -> Result {
 fn draw_score(screen: &mut impl Write, score: usize) -> Result {
     write!(
         screen,
-        "{goto}Score: {score:0>3}",
-        goto = Goto(70, TERM_HEIGHT),
-        score = score
+        "{goto}{bgc}{fgc}{bold} Score: {score:0>3} {reset}",
+        goto = Goto(69, TERM_HEIGHT),
+        bgc = color::Bg(color::LightWhite),
+        fgc = color::Fg(color::Black),
+        bold = style::Bold,
+        score = score,
+        reset = style::Reset
     )
 }
 
@@ -73,9 +77,9 @@ fn draw_err(screen: &mut impl Write, game: &Game) -> Result {
         write!(
             screen,
             "{goto}{red}{err: <width$}{reset}",
-            goto = Goto(START_X, TERM_HEIGHT - 1),
+            goto = Goto(0, TERM_HEIGHT - 1),
             red = color::Bg(color::Red),
-            width = (TERM_WIDTH - 2) as usize,
+            width = TERM_WIDTH as usize,
             err = err,
             reset = style::Reset
         )
@@ -124,11 +128,11 @@ pub fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
     write!(
         screen,
         "{}{}{:width$}{}",
-        Goto(START_X, TERM_HEIGHT),
+        Goto(0, TERM_HEIGHT),
         color::Bg(color::LightBlack),
         game.input(),
         style::Reset,
-        width = 67
+        width = 68
     )?;
 
     // write the words out
