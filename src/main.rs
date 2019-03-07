@@ -197,6 +197,13 @@ impl Game {
         }
     }
 
+    fn restart(&mut self) {
+        self.input.clear();
+        self.letters = pick_letters();
+        self.words.clear();
+        self.score = 0;
+    }
+
     fn check(&self) -> Option<String> {
         let mut has_center = false;
         for c in self.input.chars() {
@@ -279,6 +286,9 @@ fn main() -> Result {
         match c? {
             // exit
             Key::Esc => break,
+
+            // restart game
+            Key::Ctrl('n') => game.restart(),
 
             // input
             Key::Backspace => {
