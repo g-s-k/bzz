@@ -3,6 +3,7 @@ use std::fmt::Display;
 use std::fs::File;
 use std::io::{self, stdin, stdout, BufRead, BufReader, Write};
 use std::mem::replace;
+use std::thread;
 
 use rand::{
     seq::{IteratorRandom, SliceRandom},
@@ -186,12 +187,12 @@ struct Game {
 }
 
 impl Game {
-    fn new(dict: BTreeSet<String>) -> Self {
+    fn new() -> Self {
         Self {
             input: String::new(),
             letters: pick_letters(),
             words: BTreeSet::new(),
-            dict,
+            dict: BTreeSet::new(),
             score: 0,
             error: None,
         }
@@ -269,15 +270,17 @@ fn dict() -> std::result::Result<BTreeSet<String>, io::Error> {
 }
 
 fn main() -> Result {
+    let mut game = Game::new();
     let stdin = stdin();
     let mut screen = AlternateScreen::from(stdout()).into_raw_mode()?;
     screen.flush()?;
 
-    // TODO: add loading screen
-    let mut game = Game::new(dict()?);
+    let j_handle = thread::spawn(dict);
 
     draw_board(&mut screen, &game)?;
     screen.flush()?;
+
+    game.dict = j_handle.join().unwrap()?;
 
     for c in stdin.keys() {
         // clear previous error
