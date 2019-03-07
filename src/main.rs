@@ -222,7 +222,7 @@ impl Game {
 
         if !has_center {
             return Some(format!(
-                "Words must contain the center character ({}).",
+                "Words must include the center letter ({}).",
                 self.letters[0]
             ));
         }
