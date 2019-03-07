@@ -15,7 +15,7 @@ const CONSONANTS: &[char] = &[
 fn pick_letters() -> [char; 7] {
     let mut rng = thread_rng();
 
-    let num_vowels = rng.gen_range(1, 3);
+    let num_vowels = rng.gen_range(1, 4);
 
     let vowels = VOWELS.choose_multiple(&mut rng, num_vowels);
     let consonants = CONSONANTS.choose_multiple(&mut rng, 7 - num_vowels);
