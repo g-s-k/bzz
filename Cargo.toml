@@ -1,6 +1,6 @@
 [package]
-name = "spell"
-version = "0.1.0"
+name = "bzz"
+version = "0.0.1"
 authors = ["George Kaplan <george@georgekaplan.xyz>"]
 edition = "2018"
 
