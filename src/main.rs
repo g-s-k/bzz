@@ -46,7 +46,7 @@ fn main() -> Result<(), Error> {
 
     for c in stdin.keys() {
         // clear previous error
-        game.error.take();
+        game.clear_error();
 
         match c? {
             // exit
@@ -56,12 +56,10 @@ fn main() -> Result<(), Error> {
             Key::Ctrl('n') => game.restart(),
 
             // input
-            Key::Backspace => {
-                game.input.pop();
-            }
+            Key::Backspace => game.backspace(),
             Key::Char('\n') => game.submit(),
-            Key::Char(' ') => game.input.clear(),
-            Key::Char(c) if c.is_alphanumeric() => game.input.push(c.to_ascii_uppercase()),
+            Key::Char(' ') => game.clear(),
+            Key::Char(c) if c.is_alphanumeric() => game.push(c.to_ascii_uppercase()),
 
             // noise
             _ => continue,

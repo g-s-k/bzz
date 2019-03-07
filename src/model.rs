@@ -30,12 +30,12 @@ fn pick_letters() -> [char; 7] {
 }
 
 pub struct Game {
-    pub input: String,
-    pub letters: [char; 7],
-    pub words: BTreeSet<String>,
+    input: String,
+    letters: [char; 7],
+    words: BTreeSet<String>,
     dict: BTreeSet<String>,
     score: usize,
-    pub error: Option<String>,
+    error: Option<String>,
 }
 
 impl Game {
@@ -63,6 +63,26 @@ impl Game {
 
     pub fn score(&self) -> usize {
         self.score
+    }
+
+    pub fn input(&self) -> &str {
+        &self.input
+    }
+
+    pub fn letters(&self) -> [char; 7] {
+        self.letters
+    }
+
+    pub fn words(&self) -> impl Iterator<Item = &String> {
+        self.words.iter()
+    }
+
+    pub fn error(&self) -> &Option<String> {
+        &self.error
+    }
+
+    pub fn clear_error(&mut self) {
+        self.error.take();
     }
 
     fn check(&self) -> Option<String> {
@@ -115,5 +135,17 @@ impl Game {
                 self.error = Some("You already found that word!".into());
             }
         }
+    }
+
+    pub fn backspace(&mut self) {
+        self.input.pop();
+    }
+
+    pub fn clear(&mut self) {
+        self.input.clear();
+    }
+
+    pub fn push(&mut self, c: char) {
+        self.input.push(c);
     }
 }

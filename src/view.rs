@@ -69,7 +69,7 @@ fn draw_score(screen: &mut impl Write, score: usize) -> Result {
 }
 
 fn draw_err(screen: &mut impl Write, game: &Game) -> Result {
-    if let Some(err) = &game.error {
+    if let Some(err) = game.error() {
         write!(
             screen,
             "{goto}{red}{err: <width$}{reset}",
@@ -85,6 +85,7 @@ fn draw_err(screen: &mut impl Write, game: &Game) -> Result {
 }
 
 pub fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
+    let letters = game.letters();
     // clear everything
     write!(
         screen,
@@ -94,30 +95,30 @@ pub fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
         hide = cursor::Hide
     )?;
     // draw some hexagons
-    draw_hex(screen, START_X, START_Y + HALF_Y + 1, game.letters[1])?;
-    draw_hex(screen, START_X + 3 * HALF_X - 1, START_Y, game.letters[2])?;
+    draw_hex(screen, START_X, START_Y + HALF_Y + 1, letters[1])?;
+    draw_hex(screen, START_X + 3 * HALF_X - 1, START_Y, letters[2])?;
     draw_hex(
         screen,
         START_X + 6 * HALF_X - 2,
         START_Y + HALF_Y + 1,
-        game.letters[3],
+        letters[3],
     )?;
-    draw_hex(screen, START_X, START_Y + 3 * HALF_Y + 2, game.letters[4])?;
+    draw_hex(screen, START_X, START_Y + 3 * HALF_Y + 2, letters[4])?;
     draw_hex(
         screen,
         START_X + 3 * HALF_X - 1,
         START_Y + 4 * HALF_Y + 2,
-        game.letters[5],
+        letters[5],
     )?;
     draw_hex(
         screen,
         START_X + 6 * HALF_X - 2,
         START_Y + 3 * HALF_Y + 2,
-        game.letters[6],
+        letters[6],
     )?;
 
     // draw center one
-    draw_middle_hex(screen, game.letters[0])?;
+    draw_middle_hex(screen, letters[0])?;
 
     // draw input box
     write!(
@@ -125,13 +126,13 @@ pub fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
         "{}{}{:width$}{}",
         Goto(START_X, TERM_HEIGHT),
         color::Bg(color::LightBlack),
-        game.input,
+        game.input(),
         style::Reset,
         width = 67
     )?;
 
     // write the words out
-    for (idx, word) in game.words.iter().enumerate() {
+    for (idx, word) in game.words().enumerate() {
         #[allow(clippy::cast_possible_truncation)]
         write!(screen, "{}{}", Goto(LIST_START_X, 2 + idx as u16), word)?;
     }
