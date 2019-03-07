@@ -214,17 +214,17 @@ impl Game {
             }
         }
 
+        match self.input.len() {
+            0 => return Some("No input entered.".into()),
+            1..=3 => return Some("Words must be at least 4 characters.".into()),
+            _ => (),
+        }
+
         if !has_center {
             return Some(format!(
                 "Words must contain the center character ({}).",
                 self.letters[0]
             ));
-        }
-
-        match self.input.len() {
-            0 => return Some("No input entered.".into()),
-            1..=3 => return Some("Words must be at least 4 characters.".into()),
-            _ => (),
         }
 
         if !self.dict.contains(&self.input.to_lowercase()) {
