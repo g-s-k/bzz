@@ -146,12 +146,7 @@ fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
 
     // write the words out
     for (idx, word) in game.words.iter().enumerate() {
-        write!(
-            screen,
-            "{}{}",
-            Goto(LIST_START_X, 2 + idx as u16),
-            word
-        )?;
+        write!(screen, "{}{}", Goto(LIST_START_X, 2 + idx as u16), word)?;
     }
 
     draw_score(screen, game.score)?;
@@ -204,7 +199,21 @@ impl Game {
             }
         }
 
+        match self.input.len() {
+            0 => return Some("No input entered.".into()),
+            1..=3 => return Some("Words must be at least 4 characters.".into()),
+            _ => (),
+        }
+
         None
+    }
+
+    fn score(&self) -> usize {
+        if self.letters.iter().all(|&c| self.input.contains(c)) {
+            3
+        } else {
+            1
+        }
     }
 
     fn submit(&mut self) {
@@ -212,8 +221,9 @@ impl Game {
             self.error = Some(err);
             self.input.clear();
         } else {
+            let score = self.score();
             if self.words.insert(replace(&mut self.input, String::new())) {
-                self.score += 1;
+                self.score += score;
             } else {
                 self.error = Some("You already found that word!".into());
             }
