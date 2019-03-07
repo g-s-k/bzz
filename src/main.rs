@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::collections::BTreeSet;
 use std::fs::File;
 use std::io::{self, stdin, stdout, BufRead, BufReader, Write};
@@ -16,9 +17,24 @@ mod view;
 
 use model::Game;
 
-type Result = io::Result<()>;
-
 const DICT_PATH: &str = "/usr/share/dict/words";
+
+enum Error {
+    IO(io::Error),
+    Thread(Box<Any + Send>)
+}
+
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Self {
+        Error::IO(err)
+    }
+}
+
+impl From<Box<dyn Any + Send>> for Error {
+    fn from(err: Box<dyn Any + Send>) -> Self {
+        Error::Thread(err)
+    }
+}
 
 fn dict() -> std::result::Result<BTreeSet<String>, io::Error> {
     let f = File::open(DICT_PATH)?;
@@ -31,7 +47,7 @@ fn dict() -> std::result::Result<BTreeSet<String>, io::Error> {
         .collect()
 }
 
-fn main() -> Result {
+fn main() -> Result<(), Error> {
     let mut game = Game::new();
     let stdin = stdin();
     let mut screen = AlternateScreen::from(stdout()).into_raw_mode()?;
@@ -42,7 +58,7 @@ fn main() -> Result {
     view::draw_board(&mut screen, &game)?;
     screen.flush()?;
 
-    game.dict = j_handle.join().unwrap()?;
+    game.dict = j_handle.join()??;
 
     for c in stdin.keys() {
         // clear previous error

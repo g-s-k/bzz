@@ -1,5 +1,5 @@
 use std::fmt::Display;
-use std::io::Write;
+use std::io::{self, Write};
 
 use termion::{
     clear, color,
@@ -7,7 +7,9 @@ use termion::{
     style,
 };
 
-use super::{Game, Result};
+use super::Game;
+
+type Result = io::Result<()>;
 
 const TERM_HEIGHT: u16 = 24;
 const TERM_WIDTH: u16 = 80;
