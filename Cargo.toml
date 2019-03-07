@@ -3,6 +3,7 @@ name = "bzz"
 version = "0.0.1"
 authors = ["George Kaplan <george@georgekaplan.xyz>"]
 edition = "2018"
+repository = "https://github.com/g-s-k/bzz"
 
 [dependencies]
 termion = "1"
