@@ -1,4 +1,3 @@
-use std::any::Any;
 use std::collections::BTreeSet;
 use std::fs::File;
 use std::io::{self, stdin, stdout, BufRead, BufReader, Write};
@@ -12,32 +11,16 @@ use termion::{
     screen::AlternateScreen,
 };
 
+mod error;
 mod model;
 mod view;
 
+use error::Error;
 use model::Game;
 
 const DICT_PATH: &str = "/usr/share/dict/words";
 
-#[derive(Debug)]
-enum Error {
-    IO(io::Error),
-    Thread(Box<Any + Send>)
-}
-
-impl From<io::Error> for Error {
-    fn from(err: io::Error) -> Self {
-        Error::IO(err)
-    }
-}
-
-impl From<Box<dyn Any + Send>> for Error {
-    fn from(err: Box<dyn Any + Send>) -> Self {
-        Error::Thread(err)
-    }
-}
-
-fn dict() -> std::result::Result<BTreeSet<String>, io::Error> {
+fn dict() -> Result<BTreeSet<String>, io::Error> {
     let f = File::open(DICT_PATH)?;
     BufReader::new(f)
         .lines()
@@ -49,17 +32,21 @@ fn dict() -> std::result::Result<BTreeSet<String>, io::Error> {
 }
 
 fn main() -> Result<(), Error> {
+    // get this started asap
+    let dict_handle = thread::spawn(dict);
+
     let mut game = Game::new();
     let stdin = stdin();
+
     let mut screen = AlternateScreen::from(stdout()).into_raw_mode()?;
     screen.flush()?;
 
-    let j_handle = thread::spawn(dict);
-
+    // draw the game board (will be full, but not interactive until the indexing is done)
     view::draw_board(&mut screen, &game)?;
     screen.flush()?;
 
-    game.set_dict(j_handle.join()??);
+    // wait for the word list to get indexed
+    game.set_dict(dict_handle.join()??);
 
     for c in stdin.keys() {
         // clear previous error
