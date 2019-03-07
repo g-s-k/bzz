@@ -17,6 +17,9 @@ use termion::{
     style,
 };
 
+const TERM_HEIGHT: u16 = 24;
+const TERM_WIDTH: u16 = 80;
+
 const START_X: u16 = 2;
 const START_Y: u16 = 2;
 const HALF_X: u16 = 4;
@@ -70,6 +73,22 @@ fn draw_middle_hex(screen: &mut impl Write, letter: char) -> Result {
     Ok(())
 }
 
+fn draw_err(screen: &mut impl Write, game: &Game) -> Result {
+    if let Some(err) = &game.error {
+        write!(
+            screen,
+            "{goto}{red}{err: <width$}{reset}",
+            goto = Goto(LIST_START_X, TERM_HEIGHT),
+            red = color::Bg(color::Red),
+            width = (TERM_WIDTH - LIST_START_X) as usize,
+            err = err,
+            reset = style::Reset
+        )
+    } else {
+        Ok(())
+    }
+}
+
 fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
     // clear everything
     write!(
@@ -108,11 +127,12 @@ fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
     // draw input box
     write!(
         screen,
-        "{}{}{:20}{}",
-        Goto(START_X, 24),
+        "{}{}{:width$}{}",
+        Goto(START_X, TERM_HEIGHT),
         color::Bg(color::LightBlack),
         game.input,
-        style::Reset
+        style::Reset,
+        width = 35
     )?;
 
     // write the words out
@@ -124,6 +144,8 @@ fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
             word
         )?;
     }
+
+    draw_err(screen, game)?;
 
     Ok(())
 }
@@ -150,6 +172,7 @@ struct Game {
     input: String,
     letters: [char; 7],
     words: BTreeSet<String>,
+    error: Option<String>,
 }
 
 impl Game {
@@ -158,18 +181,26 @@ impl Game {
             input: String::new(),
             letters: pick_letters(),
             words: BTreeSet::new(),
+            error: None,
         }
     }
 
-    fn check(&self) -> bool {
-        self.input.chars().all(|c| self.letters.contains(&c))
+    fn check(&self) -> Option<String> {
+        for c in self.input.chars() {
+            if !self.letters.contains(&c) {
+                return Some(format!("{} is not in the letter set.", c));
+            }
+        }
+
+        None
     }
 
     fn submit(&mut self) {
-        if self.check() {
-            self.words.insert(replace(&mut self.input, String::new()));
-        } else {
+        if let Some(err) = self.check() {
+            self.error = Some(err);
             self.input.clear();
+        } else {
+            self.words.insert(replace(&mut self.input, String::new()));
         }
     }
 }
@@ -184,6 +215,9 @@ fn main() -> Result {
     screen.flush()?;
 
     for c in stdin.keys() {
+        // clear previous error
+        game.error.take();
+
         match c? {
             // exit
             Key::Esc => break,
