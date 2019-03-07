@@ -20,7 +20,7 @@ use termion::{
 const START_X: u16 = 2;
 const START_Y: u16 = 2;
 const HALF_X: u16 = 4;
-const HALF_Y: u16 = 4;
+const HALF_Y: u16 = 3;
 const LIST_START_X: u16 = 45;
 
 const VOWELS: &[char] = &['A', 'E', 'I', 'O', 'U', 'Y'];
@@ -34,25 +34,24 @@ type Result = io::Result<()>;
 fn draw_hex<T: Display>(screen: &mut impl Write, x_min: u16, y_min: u16, letter: T) -> Result {
     write!(
         screen,
-        "{l0}{s0}{l1}{s2}       {s1}{l2}{s2}         {s1}{l3}{s2}           \
-         {s1}{l4}{s2}      {c}      {s2}{l5}{s1}           \
-         {s2}{l6}{s1}         {s2}{l7}{s1}{s0}{s2}{l8}",
+        // 00B7 is centered dot
+        "{l0}{e:\u{00B7}<7}{l1}{e:\u{00B7}<9}{l2}{sp5:\u{00B7}^11}\
+         {l3}{sp3:\u{00B7}>6}{c}{sp3:\u{00B7}<6}{l4}{sp5:\u{00B7}^11}\
+         {l5}{e:\u{00B7}<9}{l6}{e:\u{00B7}<7}",
         // contents and styles
         c = letter,
         // separators
-        s0 = "_".repeat(7),
-        s1 = '\\',
-        s2 = '.',
+        e = "",
+        sp3 = "   ",
+        sp5 = "     ",
         // lines
-        l0 = Goto(x_min + 4, y_min),
-        l1 = Goto(x_min + 3, y_min + 1),
-        l2 = Goto(x_min + 2, y_min + 2),
-        l3 = Goto(x_min + 1, y_min + 3),
-        l4 = Goto(x_min + 0, y_min + 4),
-        l5 = Goto(x_min + 1, y_min + 5),
-        l6 = Goto(x_min + 2, y_min + 6),
-        l7 = Goto(x_min + 3, y_min + 7),
-        l8 = Goto(x_min + 4, y_min + 8),
+        l0 = Goto(x_min + 3, y_min + 0),
+        l1 = Goto(x_min + 2, y_min + 1),
+        l2 = Goto(x_min + 1, y_min + 2),
+        l3 = Goto(x_min + 0, y_min + 3),
+        l4 = Goto(x_min + 1, y_min + 4),
+        l5 = Goto(x_min + 2, y_min + 5),
+        l6 = Goto(x_min + 3, y_min + 6),
     )
 }
 
@@ -63,8 +62,8 @@ fn draw_middle_hex(screen: &mut impl Write, letter: char) -> Result {
     write!(screen, "{}", yellow)?;
     draw_hex(
         screen,
-        START_X + 3 * HALF_X,
-        START_Y + 2 * HALF_Y,
+        START_X + 3 * HALF_X - 1,
+        START_Y + 2 * HALF_Y + 1,
         &format!("{}{}{}{}", bold, letter, reset, yellow),
     )?;
     write!(screen, "{}", reset)?;
@@ -81,25 +80,25 @@ fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
         hide = cursor::Hide
     )?;
     // draw some hexagons
-    draw_hex(screen, START_X, START_Y + HALF_Y, game.letters[1])?;
-    draw_hex(screen, START_X + 3 * HALF_X, START_Y, game.letters[2])?;
+    draw_hex(screen, START_X, START_Y + HALF_Y + 1, game.letters[1])?;
+    draw_hex(screen, START_X + 3 * HALF_X - 1, START_Y, game.letters[2])?;
     draw_hex(
         screen,
-        START_X + 6 * HALF_X,
-        START_Y + HALF_Y,
+        START_X + 6 * HALF_X - 2,
+        START_Y + HALF_Y + 1,
         game.letters[3],
     )?;
-    draw_hex(screen, START_X, START_Y + 3 * HALF_Y, game.letters[4])?;
+    draw_hex(screen, START_X, START_Y + 3 * HALF_Y + 2, game.letters[4])?;
     draw_hex(
         screen,
-        START_X + 3 * HALF_X,
-        START_Y + 4 * HALF_Y,
+        START_X + 3 * HALF_X - 1,
+        START_Y + 4 * HALF_Y + 2,
         game.letters[5],
     )?;
     draw_hex(
         screen,
-        START_X + 6 * HALF_X,
-        START_Y + 3 * HALF_Y,
+        START_X + 6 * HALF_X - 2,
+        START_Y + 3 * HALF_Y + 2,
         game.letters[6],
     )?;
 
@@ -107,7 +106,14 @@ fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
     draw_middle_hex(screen, game.letters[0])?;
 
     // draw input box
-    write!(screen, "{}{}{:20}{}", Goto(START_X, 40), color::Bg(color::LightBlack), game.input, style::Reset)?;
+    write!(
+        screen,
+        "{}{}{:20}{}",
+        Goto(START_X, 24),
+        color::Bg(color::LightBlack),
+        game.input,
+        style::Reset
+    )?;
 
     // write the words out
     for (idx, word) in game.words.iter().enumerate() {
