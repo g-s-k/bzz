@@ -1,6 +1,7 @@
 use std::collections::BTreeSet;
 use std::fmt::Display;
-use std::io::{self, stdin, stdout, Write};
+use std::fs::File;
+use std::io::{self, stdin, stdout, BufRead, BufReader, Write};
 use std::mem::replace;
 
 use rand::{
@@ -31,6 +32,8 @@ const CONSONANTS: &[char] = &[
     'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X',
     'Z',
 ];
+
+const DICT_PATH: &str = "/usr/share/dict/words";
 
 type Result = io::Result<()>;
 
@@ -77,7 +80,7 @@ fn draw_score(screen: &mut impl Write, score: usize) -> Result {
     write!(
         screen,
         "{goto}Score: {score:0>3}",
-        goto = Goto(34, TERM_HEIGHT),
+        goto = Goto(70, TERM_HEIGHT),
         score = score
     )
 }
@@ -87,9 +90,9 @@ fn draw_err(screen: &mut impl Write, game: &Game) -> Result {
         write!(
             screen,
             "{goto}{red}{err: <width$}{reset}",
-            goto = Goto(LIST_START_X, TERM_HEIGHT),
+            goto = Goto(START_X, TERM_HEIGHT - 1),
             red = color::Bg(color::Red),
-            width = (TERM_WIDTH - LIST_START_X) as usize,
+            width = (TERM_WIDTH - 2) as usize,
             err = err,
             reset = style::Reset
         )
@@ -141,7 +144,7 @@ fn draw_board(screen: &mut impl Write, game: &Game) -> Result {
         color::Bg(color::LightBlack),
         game.input,
         style::Reset,
-        width = 31
+        width = 67
     )?;
 
     // write the words out
@@ -177,32 +180,48 @@ struct Game {
     input: String,
     letters: [char; 7],
     words: BTreeSet<String>,
+    dict: BTreeSet<String>,
     score: usize,
     error: Option<String>,
 }
 
 impl Game {
-    fn new() -> Self {
+    fn new(dict: BTreeSet<String>) -> Self {
         Self {
             input: String::new(),
             letters: pick_letters(),
             words: BTreeSet::new(),
+            dict,
             score: 0,
             error: None,
         }
     }
 
     fn check(&self) -> Option<String> {
+        let mut has_center = false;
         for c in self.input.chars() {
-            if !self.letters.contains(&c) {
+            if c == self.letters[0] {
+                has_center = true;
+            } else if !self.letters.contains(&c) {
                 return Some(format!("{} is not in the letter set.", c));
             }
+        }
+
+        if !has_center {
+            return Some(format!(
+                "Words must contain the center character ({}).",
+                self.letters[0]
+            ));
         }
 
         match self.input.len() {
             0 => return Some("No input entered.".into()),
             1..=3 => return Some("Words must be at least 4 characters.".into()),
             _ => (),
+        }
+
+        if !self.dict.contains(&self.input.to_lowercase()) {
+            return Some(format!("{} is not in the dictionary.", self.input));
         }
 
         None
@@ -231,11 +250,24 @@ impl Game {
     }
 }
 
+fn dict() -> std::result::Result<BTreeSet<String>, io::Error> {
+    let f = File::open(DICT_PATH)?;
+    BufReader::new(f)
+        .lines()
+        .filter(|w| match w {
+            Err(_) => true,
+            Ok(s) => s.chars().all(|c| c.is_alphabetic() && c.is_lowercase()),
+        })
+        .collect()
+}
+
 fn main() -> Result {
-    let mut game = Game::new();
     let stdin = stdin();
     let mut screen = AlternateScreen::from(stdout()).into_raw_mode()?;
     screen.flush()?;
+
+    // TODO: add loading screen
+    let mut game = Game::new(dict()?);
 
     draw_board(&mut screen, &game)?;
     screen.flush()?;
